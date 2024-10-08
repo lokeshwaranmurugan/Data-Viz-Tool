@@ -16,12 +16,16 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 # Configuration
 UPLOAD_FOLDER = './python-backend/uploads/'
 EXPORT_FOLDER = './python-backend/output/'
+PROCESSED_FOLDER = './python-backend/processed/'
 ALLOWED_EXTENSIONS = {'csv', 'xlsx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Ensure the upload folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+
+# Ensure processed folder exists
+os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -167,6 +171,74 @@ def get_file():
         
     else:
         return jsonify({'status': 'Provided file is neither a CSV nor an Excel file'}), 400
+    
+
+@app.route('/process-file', methods=['GET'])
+def process_file():
+    # Get filename, foldername, and format from request parameters
+    filename = request.args.get('fileName')
+    foldername = request.args.get('folderName')
+    output_format = request.args.get('format', 'excel')  # Default to excel if not provided
+
+    if not filename or not foldername:
+        return jsonify({'error': 'filename and foldername parameters are required'}), 400
+
+    # Construct the file path
+    file_path = os.path.join(EXPORT_FOLDER, foldername, secure_filename(filename))
+
+    # Check if file exists
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+
+    # Determine file extension
+    file_ext = os.path.splitext(filename)[1].lower()
+
+    try:
+        # Handle the request based on the output format
+        if output_format == 'excel':
+            # If user requested Excel format
+            if file_ext == '.xlsx':
+                # If it's already an Excel file, send it directly
+                return send_file(file_path, as_attachment=True, download_name=filename)
+            elif file_ext == '.csv':
+                # If it's a CSV file, convert it to Excel
+                df = pd.read_csv(file_path)
+                processed_filename = f'processed_{filename.split(".")[0]}.xlsx'
+                processed_file_path = os.path.join(PROCESSED_FOLDER, processed_filename)
+
+                # Save CSV data to Excel
+                df.to_excel(processed_file_path, index=False)
+                
+                # Send the processed Excel file
+                return send_file(processed_file_path, as_attachment=True, download_name=processed_filename)
+            else:
+                return jsonify({'error': 'Unsupported file type for Excel conversion'}), 400
+        
+        elif output_format == 'csv':
+            # If user requested CSV format
+            if file_ext == '.csv':
+                # If it's already a CSV file, send it directly
+                return send_file(file_path, as_attachment=True, download_name=filename)
+            elif file_ext == '.xlsx':
+                # If it's an Excel file, convert to CSV
+                excel_file = pd.ExcelFile(file_path)
+                # Let's assume we process only the first sheet for CSV conversion
+                df = excel_file.parse(excel_file.sheet_names[0])
+                processed_filename = f'processed_{filename.split(".")[0]}.csv'
+                processed_file_path = os.path.join(PROCESSED_FOLDER, processed_filename)
+                
+                # Save Excel sheet to CSV
+                df.to_csv(processed_file_path, index=False)
+
+                # Send the processed CSV file
+                return send_file(processed_file_path, as_attachment=True, download_name=processed_filename)
+            else:
+                return jsonify({'error': 'Unsupported file type for CSV conversion'}), 400
+        else:
+            return jsonify({'error': 'Invalid format requested. Use "excel" or "csv".'}), 400
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

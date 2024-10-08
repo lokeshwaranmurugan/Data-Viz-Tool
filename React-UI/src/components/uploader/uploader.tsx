@@ -30,7 +30,7 @@ const FileUpload = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      const validExtensions = ['.csv', '.xlsx', '.xls'];
+      const validExtensions = ['.csv', 'xlsx', '.xls'];
       const fileExtension = selectedFile.name.slice(-4);
       if (!validExtensions.includes(fileExtension)) {
         setError('Please upload a valid CSV or Excel file.');
