@@ -1,0 +1,11 @@
+id,pageTitle,status,eventCount,users,viewsPerUser,averageTime
+1,Homepage Overview,Online,8345,212423,18.5,2m 15s
+2,Product Details - Gadgets,Online,5653,172240,9.7,2m 30s
+3,Checkout Process - Step 1,Offline,3455,58240,15.2,2m 10s
+4,User Profile Dashboard,Online,112543,96240,4.5,2m 40s
+5,Article Listing - Tech News,Offline,3653,142240,3.1,2m 55s
+6,FAQs - Customer Support,Online,106543,15240,7.2,2m 20s
+7,Product Comparison - Laptops,Offline,7853,32240,6.5,2m 50s
+8,Shopping Cart - Electronics,Online,8563,48240,4.3,3m 10s
+9,Payment Confirmation - Bank Transfer,Offline,4563,18240,2.7,3m 25s
+10,Product Reviews - Smartphones,Online,9863,28240,5.1,3m 05s
