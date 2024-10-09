@@ -14,9 +14,9 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Configuration
-UPLOAD_FOLDER = './python-backend/uploads/'
-EXPORT_FOLDER = './python-backend/output/'
-PROCESSED_FOLDER = './python-backend/processed/'
+UPLOAD_FOLDER = './Python-Flask/uploads/'
+EXPORT_FOLDER = './Python-Flask/output/'
+PROCESSED_FOLDER = './Python-Flask/processed/'
 ALLOWED_EXTENSIONS = {'csv', 'xlsx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
