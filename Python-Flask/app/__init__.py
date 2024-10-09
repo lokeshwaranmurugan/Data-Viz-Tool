@@ -194,12 +194,18 @@ def process_file():
     file_ext = os.path.splitext(filename)[1].lower()
 
     try:
+        output = BytesIO()
         # Handle the request based on the output format
         if output_format == 'excel':
             # If user requested Excel format
             if file_ext == '.xlsx':
                 # If it's already an Excel file, send it directly
-                return send_file(file_path, as_attachment=True, download_name=filename)
+                data = pd.read_excel(file_path)
+                
+                data.to_excel(output, index=False)
+                output.seek(0)
+                return send_file(output,mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                 , as_attachment=True, download_name=filename)
             elif file_ext == '.csv':
                 # If it's a CSV file, convert it to Excel
                 df = pd.read_csv(file_path)
@@ -207,10 +213,11 @@ def process_file():
                 processed_file_path = os.path.join(PROCESSED_FOLDER, processed_filename)
 
                 # Save CSV data to Excel
-                df.to_excel(processed_file_path, index=False)
-                
+                df.to_excel(output, index=False)
+                output.seek(0)
                 # Send the processed Excel file
-                return send_file(processed_file_path, as_attachment=True, download_name=processed_filename)
+                return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                 as_attachment=True, download_name=processed_filename)
             else:
                 return jsonify({'error': 'Unsupported file type for Excel conversion'}), 400
         
@@ -218,7 +225,11 @@ def process_file():
             # If user requested CSV format
             if file_ext == '.csv':
                 # If it's already a CSV file, send it directly
-                return send_file(file_path, as_attachment=True, download_name=filename)
+                data = pd.read_csv(file_path)
+                
+                data.to_csv(output, index=False)
+                output.seek(0)
+                return send_file(output, mimetype='text/csv', as_attachment=True, download_name=filename)
             elif file_ext == '.xlsx':
                 # If it's an Excel file, convert to CSV
                 excel_file = pd.ExcelFile(file_path)
@@ -228,10 +239,10 @@ def process_file():
                 processed_file_path = os.path.join(PROCESSED_FOLDER, processed_filename)
                 
                 # Save Excel sheet to CSV
-                df.to_csv(processed_file_path, index=False)
-
+                df.to_csv(output, index=False)
+                output.seek(0)
                 # Send the processed CSV file
-                return send_file(processed_file_path, as_attachment=True, download_name=processed_filename)
+                return send_file(output, mimetype='text/csv', as_attachment=True, download_name=processed_filename)
             else:
                 return jsonify({'error': 'Unsupported file type for CSV conversion'}), 400
         else:
