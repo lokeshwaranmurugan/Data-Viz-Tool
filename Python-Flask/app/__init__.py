@@ -1,8 +1,9 @@
 
+import json
 import os
 import logging
 import pandas as pd
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response
 from io import StringIO, BytesIO
 from werkzeug.utils import secure_filename
 import csv
@@ -72,7 +73,16 @@ def upload_file():
 
             # Send back the data for visualization
             data = [{'sheetName':filename , 'sheetContent': df.to_dict(orient='records')}]
-            return jsonify({'message': f'File uploaded successfully: {filename}','data':data}), 200
+            # data = [{'sheetName':filename , 'sheetContent': df.apply(lambda row: OrderedDict(row), axis=1).to_list()}]
+            # return jsonify({'message': f'File uploaded successfully: {filename}','data':data}), 200
+            response_json = json.dumps(
+                {'message': f'File uploaded successfully: {filename}', 'data': data},
+                ensure_ascii=False,  # Optional: for proper handling of non-ASCII characters
+                sort_keys=False      # Prevent sorting of keys
+            )
+
+            # Return the response with correct content type
+            return Response(response=response_json, status=200, mimetype='application/json')
         else:
             return jsonify({'error': 'File type not allowed'}), 400
 
@@ -155,7 +165,15 @@ def get_file():
         try:
             csv_data = pd.read_csv(file_path)
             json_data = [{'sheetName':file_name , 'sheetContent': csv_data.to_dict(orient='records')}]  # Convert CSV to JSON format
-            return jsonify({'status':'success','data':json_data}), 200
+            response_json = json.dumps(
+                {'status': 'success', 'data': json_data},
+                ensure_ascii=False,  # Optional: for proper handling of non-ASCII characters
+                sort_keys=False      # Prevent sorting of keys
+            )
+
+            # Return the response with correct content type
+            return Response(response=response_json, status=200, mimetype='application/json')
+            # return jsonify({'status':'success','data':json_data}), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         
@@ -165,7 +183,17 @@ def get_file():
             result = []
             for sheet_name, data in excel_data.items():
                 result.append({'sheetName':sheet_name , 'sheetContent': data.to_dict(orient='records')})
-            return jsonify({'status':'success','data':result}), 200
+            
+            response_json = json.dumps(
+                {'status': 'success', 'data': result},
+                ensure_ascii=False,  # Optional: for proper handling of non-ASCII characters
+                sort_keys=False      # Prevent sorting of keys
+            )
+
+            # Return the response with correct content type
+            return Response(response=response_json, status=200, mimetype='application/json')
+            
+            # return jsonify({'status':'success','data':result}), 200
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         
