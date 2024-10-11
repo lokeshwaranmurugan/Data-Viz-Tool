@@ -2,12 +2,15 @@
 import json
 import os
 import logging
+import threading
+import time
 import pandas as pd
 from flask import Flask, request, jsonify, send_file, Response
 from io import StringIO, BytesIO
 from werkzeug.utils import secure_filename
 import csv
 from flask_cors import CORS, cross_origin
+# from collections import OrderedDict
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -15,9 +18,9 @@ cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Configuration
-UPLOAD_FOLDER = './Python-Flask/uploads/'
-EXPORT_FOLDER = './Python-Flask/output/'
-PROCESSED_FOLDER = './Python-Flask/processed/'
+UPLOAD_FOLDER = './python-backend/uploads/'
+EXPORT_FOLDER = './python-backend/output/'
+PROCESSED_FOLDER = './python-backend/processed/'
 ALLOWED_EXTENSIONS = {'csv', 'xlsx'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -278,6 +281,36 @@ def process_file():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+def process_file_trigger(filename):
+    try:
+        # Simulate a time-consuming file processing task
+        logging.info(f"Starting to process file: {filename}")
+        time.sleep(10)  # Simulate a delay
+        logging.info(f"File processed successfully: {filename}")
+    except Exception as e:
+        logging.error(f"Error processing file {filename}: {e}")
+
+@app.route('/api/trigger-file-process', methods=['POST'])
+def trigger_file_process():
+    if not request.is_json:
+        logging.warning("Request does not contain JSON")
+        return jsonify({"error": "Invalid input format, expected JSON."}), 400
+
+    data = request.json
+    filename = data.get('filename')
+
+    if not filename or not isinstance(filename, str):
+        logging.warning("Invalid filename provided")
+        return jsonify({"error": "Invalid or missing filename."}), 400
+
+    # Start the file processing in a separate thread
+    thread = threading.Thread(target=process_file_trigger, args=(filename,))
+    thread.start()
+
+    # Send a success response immediately
+    return jsonify({"status":"Success","message": "File processing started", "filename": filename}), 202
 
 
 if __name__ == '__main__':
