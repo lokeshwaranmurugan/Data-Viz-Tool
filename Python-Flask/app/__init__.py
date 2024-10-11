@@ -10,6 +10,7 @@ from io import StringIO, BytesIO
 from werkzeug.utils import secure_filename
 import csv
 from flask_cors import CORS, cross_origin
+from wntd_main import main as trigger_main
 # from collections import OrderedDict
 
 # Initialize Flask app
@@ -287,8 +288,13 @@ def process_file_trigger(filename):
     try:
         # Simulate a time-consuming file processing task
         logging.info(f"Starting to process file: {filename}")
-        time.sleep(10)  # Simulate a delay
-        logging.info(f"File processed successfully: {filename}")
+        # time.sleep(10)  # Simulate a delay
+        response = trigger_main(filename,4,1);
+        if response == "SUCCESS" :
+            logging.info(f"File processed successfully: {filename}")
+        else:
+            logging.info(f"Error unable to process: {filename}")
+            logging.info(response)
     except Exception as e:
         logging.error(f"Error processing file {filename}: {e}")
 
