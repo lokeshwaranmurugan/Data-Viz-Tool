@@ -1,7 +1,9 @@
 
+from datetime import datetime
 import json
 import os
 import logging
+import shutil
 import threading
 import time
 import pandas as pd
@@ -317,6 +319,43 @@ def trigger_file_process():
 
     # Send a success response immediately
     return jsonify({"status":"Success","message": "File processing started", "filename": filename}), 202
+
+
+def archive_and_move_file(upload_folder, output_folder, archived_folder, filename):
+    # Construct full file path for the uploaded file
+    upload_file_path = os.path.join(upload_folder, filename)
+
+    # Check if the file exists in the uploads folder
+    if os.path.isfile(upload_file_path):
+        # Get the file name (without extension) and extension
+        file_name, file_extension = os.path.splitext(filename)
+
+        # Generate the new folder name with the current date and time in the archived folder
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        archive_folder_name = f"{file_name}_{current_time}"
+        archive_folder_path = os.path.join(archived_folder, archive_folder_name)
+
+        # Create the new folder inside the archived folder
+        os.makedirs(archive_folder_path, exist_ok=True)
+
+        # Move the file from the uploads folder to the newly created folder in archived
+        shutil.move(upload_file_path, os.path.join(archive_folder_path, filename))
+        print(f"File moved to: {archive_folder_path}")
+
+        # Check if the output folder has a folder with the same name as the uploaded file (without extension)
+        output_folder_path = os.path.join(output_folder, file_name)
+        if os.path.isdir(output_folder_path):
+            # Create a zip file of the folder in the archived folder
+            zip_file_path = os.path.join(archive_folder_path, f"{file_name}.zip")
+            shutil.make_archive(zip_file_path.replace('.zip', ''), 'zip', output_folder_path)
+
+            # Move the zip file to the archive folder
+            print(f"Folder zipped and moved to: {zip_file_path}")
+        else:
+            print(f"No folder found in the output folder with the name '{file_name}'.")
+
+    else:
+        print(f"File '{filename}' not found in '{upload_folder}'.")
 
 
 if __name__ == '__main__':
